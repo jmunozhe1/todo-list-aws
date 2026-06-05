@@ -46,11 +46,16 @@ pipeline {
 
         stage('Promote') {
             steps {
-                sh '''
-                    git checkout master
-                    git merge origin/develop --no-edit
-                    git push origin master
-                '''
+                withCredentials([usernamePassword(credentialsId: 'git-credentials', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+                    sh '''
+                        git config user.email "jenkins@ci.com"
+                        git config user.name "Jenkins CI"
+                        git checkout master
+                        git merge origin/develop --no-edit
+                        
+                        git push https://${GIT_USER}:${GIT_TOKEN}@github.com/jmunozhe1/todo-list-aws.git master
+                    '''
+                }
             }
         }
     }
