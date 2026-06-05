@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        PATH = "/home/ubuntu/.local/bin:${env.PATH}"
+        PATH = "/var/lib/jenkins/.local/bin:${env.PATH}"
     }
 
     stages {
@@ -24,7 +24,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh 'sam build'
-                sh 'sam deploy --config-env staging --no-confirm-changeset'
+                sh 'sam deploy --config-env staging --no-confirm-changeset --no-resolve-s3'
             }
         }
 
