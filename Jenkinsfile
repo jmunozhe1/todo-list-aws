@@ -24,7 +24,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh 'sam build'
-                sh 'sam deploy --config-env staging --no-confirm-changeset --s3-bucket aws-sam-cli-managed-default-samclisourcebucket-7zzg7iedbe1i'
+                sh 'sam deploy --config-env staging --no-confirm-changeset --s3-bucket aws-sam-cli-managed-default-samclisourcebucket-7zzg7iedbe1i --no-resolve-s3'
             }
         }
 
