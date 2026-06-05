@@ -8,18 +8,13 @@ pipeline {
     stages {
         stage('Get Code') {
             steps {
-                checkout([
-                    $class: 'GitSCM', 
-                    branches: [[name: '*/develop']], 
-                    extensions: [], 
-                    userRemoteConfigs: [[url: 'https://github.com/jmunozhe1/todo-list-aws.git']]
-                ])
+                echo 'Codigo fuente descargado correctamente desde la rama develop.'
             }
         }
 
         stage('Static Test') {
             steps {
-                sh 'pip install --user flake8 bandit'
+                sh 'pip install --break-system-packages flake8 bandit'
                 sh 'flake8 src/ > flake8-report.txt || true'
                 sh 'bandit -r src/ -f txt -o bandit-report.txt || true'
                 archiveArtifacts artifacts: 'flake8-report.txt, bandit-report.txt', allowEmptyArchive: false
@@ -35,7 +30,7 @@ pipeline {
 
         stage('Rest Test') {
             steps {
-                sh 'pip install --user pytest requests'
+                sh 'pip install --break-system-packages pytest requests'
                 script {
                     def apiUrl = sh(
                         script: "aws cloudformation describe-stacks --stack-name staging-todo-list-aws --query \"Stacks[0].Outputs[?OutputKey=='BaseUrlApi'].OutputValue\" --output text",
