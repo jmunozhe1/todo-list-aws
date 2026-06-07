@@ -38,6 +38,7 @@ pipeline {
                     ).trim()
                     
                     withEnv(["BASE_URL=${apiUrl}"]) {
+                        sh 'sleep 5'
                         sh 'pytest test/integration/todoApiTest.py'
                     }
                 }
