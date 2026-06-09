@@ -8,11 +8,14 @@ pipeline {
     stages {
         stage('Get Code') {
             steps {
-                echo 'Codigo fuente descargado correctamente desde la rama develop.'
+                echo 'Codigo fuente descargado correctamente.'
             }
         }
 
         stage('Static Test') {
+            when {
+                branch 'develop'
+            }
             steps {
                 sh 'pip install --break-system-packages flake8 bandit'
                 sh 'flake8 src/ > flake8-report.txt || true'
@@ -21,14 +24,20 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Staging') {
+            when {
+                branch 'develop'
+            }
             steps {
                 sh 'sam build'
                 sh 'sam deploy --config-env staging --no-confirm-changeset --no-fail-on-empty-changeset --s3-bucket aws-sam-cli-managed-default-samclisourcebucket-7zzg7iedbe1i --no-resolve-s3'
             }
         }
 
-        stage('Rest Test') {
+        stage('Rest Test Staging') {
+            when {
+                branch 'develop'
+            }
             steps {
                 sh 'pip install --break-system-packages pytest requests'
                 script {
@@ -46,6 +55,9 @@ pipeline {
         }
 
         stage('Promote') {
+            when {
+                branch 'develop'
+            }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'git-credentials', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
                     sh '''
@@ -53,9 +65,53 @@ pipeline {
                         git config user.name "Jenkins CI"
                         git checkout master
                         git merge origin/develop --no-edit
-                        
                         git push https://${GIT_USER}:${GIT_TOKEN}@github.com/jmunozhe1/todo-list-aws.git master
                     '''
+                }
+            }
+        }
+
+        stage('Deploy Production') {
+            when {
+                branch 'master'
+            }
+            steps {
+                sh 'sam build'
+                sh 'sam deploy --config-env production --no-confirm-changeset --no-fail-on-empty-changeset --s3-bucket aws-sam-cli-managed-default-samclisourcebucket-7zzg7iedbe1i --no-resolve-s3'
+            }
+        }
+
+        stage('Rest Test Production') {
+            when {
+                branch 'master'
+            }
+            steps {
+                sh 'pip install --break-system-packages pytest requests'
+                script {
+                    def apiUrl = sh(
+                        script: "aws cloudformation describe-stacks --stack-name production-todo-list-aws --query \"Stacks[0].Outputs[?OutputKey=='BaseUrlApi'].OutputValue\" --output text",
+                        returnStdout: true
+                    ).trim()
+                    
+                    withEnv(["BASE_URL=${apiUrl}"]) {
+                        sh 'sleep 5'
+                        sh '''
+                            cat << 'EOF' > test/integration/todoReadOnlyTest.py
+import os
+import unittest
+import requests
+
+BASE_URL = os.environ.get("BASE_URL")
+
+class TestApiReadOnly(unittest.TestCase):
+    def test_api_listtodos_readonly(self):
+        url = BASE_URL + "/todos"
+        response = requests.get(url)
+        self.assertEqual(response.status_code, 200, f"Error en la peticion API a {url}")
+EOF
+                            pytest test/integration/todoReadOnlyTest.py
+                        '''
+                    }
                 }
             }
         }
