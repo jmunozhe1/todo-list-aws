@@ -14,7 +14,7 @@ pipeline {
 
         stage('Static Test') {
             when {
-                branch 'develop'
+                expression { return env.GIT_BRANCH == 'origin/develop' || env.BRANCH_NAME == 'develop' || sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop' }
             }
             steps {
                 sh 'pip install --break-system-packages flake8 bandit'
@@ -26,7 +26,7 @@ pipeline {
 
         stage('Deploy Staging') {
             when {
-                branch 'develop'
+                expression { return env.GIT_BRANCH == 'origin/develop' || env.BRANCH_NAME == 'develop' || sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop' }
             }
             steps {
                 sh 'sam build'
@@ -36,7 +36,7 @@ pipeline {
 
         stage('Rest Test Staging') {
             when {
-                branch 'develop'
+                expression { return env.GIT_BRANCH == 'origin/develop' || env.BRANCH_NAME == 'develop' || sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop' }
             }
             steps {
                 sh 'pip install --break-system-packages pytest requests'
@@ -56,7 +56,7 @@ pipeline {
 
         stage('Promote') {
             when {
-                branch 'develop'
+                expression { return env.GIT_BRANCH == 'origin/develop' || env.BRANCH_NAME == 'develop' || sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop' }
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'git-credentials', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
@@ -73,7 +73,7 @@ pipeline {
 
         stage('Deploy Production') {
             when {
-                branch 'master'
+                expression { return env.GIT_BRANCH == 'origin/master' || env.BRANCH_NAME == 'master' || sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'master' }
             }
             steps {
                 sh 'sam build'
@@ -83,7 +83,7 @@ pipeline {
 
         stage('Rest Test Production') {
             when {
-                branch 'master'
+                expression { return env.GIT_BRANCH == 'origin/master' || env.BRANCH_NAME == 'master' || sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'master' }
             }
             steps {
                 sh 'pip install --break-system-packages pytest requests'
