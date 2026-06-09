@@ -89,7 +89,7 @@ pipeline {
                 sh 'pip install --break-system-packages pytest requests'
                 script {
                     def apiUrl = sh(
-                        script: "aws cloudformation describe-stacks --stack-name production-todo-list-aws --query \"Stacks[0].Outputs[?OutputKey=='BaseUrlApi'].OutputValue\" --output text",
+                        script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query \"Stacks[0].Outputs[?OutputKey=='BaseUrlApi'].OutputValue\" --output text",
                         returnStdout: true
                     ).trim()
                     
