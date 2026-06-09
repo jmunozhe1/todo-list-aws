@@ -48,8 +48,13 @@ pipeline {
                     
                     withEnv(["BASE_URL=${apiUrl}"]) {
                         sh 'sleep 5'
-                        sh 'pytest test/integration/todoApiTest.py'
+                        sh 'pytest test/integration/todoApiTest.py --junitxml=staging-results.xml'
                     }
+                }
+            }
+            post {
+                always {
+                    junit 'staging-results.xml'
                 }
             }
         }
@@ -109,9 +114,14 @@ class TestApiReadOnly(unittest.TestCase):
         response = requests.get(url)
         self.assertEqual(response.status_code, 200, f"Error en la peticion API a {url}")
 EOF
-                            pytest test/integration/todoReadOnlyTest.py
+                            pytest test/integration/todoReadOnlyTest.py --junitxml=production-results.xml
                         '''
                     }
+                }
+            }
+            post {
+                always {
+                    junit 'production-results.xml'
                 }
             }
         }
